@@ -1,0 +1,41 @@
+10 Total
+1-Caio
+45 Hemacias
+15 Hemoglobina
+40 Hematocrito
+2-Pedro
+43 Hemacias
+10 Hemoglobina
+42 Hematocrito
+3-Henrique
+44 Hemacias
+11 Hemoglobina
+40 Hematocrito
+4-Joédyson
+42 Hemacias
+14 Hemoglobina
+46 Hematocrito
+5-Joélyton
+43 Hemacias
+16 Hemoglobina
+47 Hematocrito
+6-Genilson
+43 Hemacias
+12 Hemoglobina
+43 Hematocrito
+7-Solange
+43 Hemacias
+13 Hemoglobina
+45 Hematocrito
+8-Gabriel
+43 Hemacias
+12 Hemoglobina
+40 Hematocrito
+9-Tony
+43 Hemacias
+15 Hemoglobina
+42 Hematocrito
+10-Breno
+46 Hemacias
+12 Hemoglobina
+40 Hematocrito

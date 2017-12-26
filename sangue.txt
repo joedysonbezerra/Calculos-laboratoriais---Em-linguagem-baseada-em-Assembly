@@ -1,0 +1,306 @@
+.DATA
+
+Entrada_dados = "dados.txt"
+Saida_dados = "resultado.txt"
+Hemacias = 0
+Hemoglobina = 0
+Hematocrito = 0
+Handler_resultado = 0
+Handler_dados = 0 
+Space = "\t"
+Space1 = "\n"
+Vcm = "VOLUME CORPUSCULAR MEDIO = "
+Hcm = "HEMOGLOBINA CORPUSCULAR MEDIO = "
+Chcm = "CONCENTRACAO DE HEMOGLOBINA CORPUSCULAR MEDIO = "
+Dados = 0
+
+.CODE
+
+main:PUSH 6                      ; Open mode Write and Create
+	 PUSH Saida_dados            ; Nome do arquivo
+	 SYSCALL 0 R2                ; FOPEN
+
+JZ R2 aberto_ok
+PRINT "Erro ao criar o arquivo.\n"
+EXIT 1
+
+aberto_ok:POP R1           ; FOPEN retorna o Handler do arquivo.
+		  ST4 R1 Handler_resultado
+		  PUSH 1                      ; Open mode Read
+		  PUSH Entrada_dados          ; Nome do arquivo
+SYSCALL 0 R2                ; FOPEN
+
+JZ R2 leitura_ok
+PRINT "Erro ao abrir arquivo.\n"
+EXIT 1
+
+leitura_ok:POP R3       ; FOPEN retorna o Handler do arquivo.
+		   PUSH R3
+		   SYSCALL 4 R2 ;Total de dados a ser lidos
+		   POP R4
+		   ST4 R4 Dados
+		   JZ R4 Fim_alternativo
+
+		   MV R2 ST  
+		   PUSHN 32 
+	       PUSH R2  
+		   PUSH 32  
+		   PUSH R3  
+		   SYSCALL 3 R8
+		   POPN 32
+
+	  loop:PUSH R3
+		   SYSCALL 4 R2 ;Ler o indice do paciente
+		   POP R2
+		   PRINT R2 "º Paciente\n"
+
+		   PUSH R2                     ; Parâmetro do tipo inteiro
+		   PUSH 1	                    
+		   PUSH R1                     ; Handler_resultado
+		   SYSCALL 2 R4                ; FPRINT
+
+		   JZ R4 Indice_ok
+			PRINT "Erro ao escrever o Indice do paciente no arquivo.\n"
+		   EXIT 1
+		   
+  Indice_ok:MV R2 ST ;Ler o nome 
+		   PUSHN 32 
+	       PUSH R2  
+		   PUSH 32  
+		   PUSH R3  
+		   SYSCALL 3 R8  
+		   PUSH R2 ;Escrever o nome                 
+		   PUSH 0                      
+		   PUSH R1                     
+		   SYSCALL 2 R2    
+
+		   JZ R2 Nome_ok
+			PRINT "Erro ao escrever o Nome do paciente no arquivo.\n"
+		   EXIT 1
+
+	Nome_ok:POPN 32
+
+				
+
+			JZ R2 Pular_ok
+				PRINT "Erro a pular linha no arquivo.\n"
+		    EXIT 1
+           
+  Pular_ok:PUSH R3
+		   SYSCALL 4 R2 ;Ler o valor da Hemacias
+		   POP R4
+		   ST4 R4 Hemacias ;Salvar o valor do hematocrito 
+
+		   MV R2 ST ;Ler string e descarta
+		   PUSHN 32 
+	       PUSH R2  
+		   PUSH 32  
+		   PUSH R3  
+		   SYSCALL 3 R8               
+		   POPN 32 
+
+		   PUSH R3
+		   SYSCALL 4 R2 ;Ler o valor da Hemoglobina
+		   POP R4
+		   ST4 R4 Hemoglobina ;Salvar o valor do hematocrito 
+
+		   MV R2 ST ;Ler string e descarta
+		   PUSHN 32 
+	       PUSH R2  
+		   PUSH 32  
+		   PUSH R3  
+		   SYSCALL 3 R8               
+		   POPN 32
+		   
+		   PUSH R3
+		   SYSCALL 4 R2 ;Ler o valor do hematocrito
+		   POP R4
+		   ST4 R4 Hematocrito ;Salvar o valor do hematocrito 
+
+           MV R2 ST ;Ler string e descarta
+		   PUSHN 32 
+	       PUSH R2  
+		   PUSH 32  
+		   PUSH R3  
+		   SYSCALL 3 R8               
+		   POPN 32
+
+ST4 R3 Handler_dados
+
+MV R1 0; Por Questão de Segurança Zerei os registradores utilizados
+MV R2 0
+MV R3 0 
+MV R4 0  
+MV R8 0
+
+	;Inicio dos calculos
+	 LD4 R1 Hemacias
+	 LD4 R3 Hematocrito
+	 ST4 R1 Hemacias
+	 ST4 R3 Hematocrito
+		PUSH R3 ;Calculo VOLUME CORPUSCULAR MÉDIO
+			CALL Mulfixo
+			PUSH R1
+			CALL Divfixo
+			POP R2
+		PRINT "\tVOLUME CORPUSCULAR MÉDIO = " R2 "\n"
+
+			;Imprimindo o dado no arquivo resultado.txt
+				LD4 R1 Handler_resultado
+				MV R4 0
+
+				PUSH Vcm              		; Parâmetro do tipo string
+				PUSH 0                       
+				PUSH R1                     ; Handler do arquivo
+				SYSCALL 2 R4                ; FPRINT
+
+				PUSH R2                     ; Parâmetro do tipo inteiro
+				PUSH 1	                    
+				PUSH R1                     ; Handler_resultado
+				SYSCALL 2 R4                ; FPRINT
+
+				PUSH Space                  ; Parâmetro do tipo string
+				PUSH 0                      
+				PUSH R1                     ; Handler do arquivo
+				SYSCALL 2 R4                ; FPRINT
+
+				JZ R4 Escrever_ok1
+				PRINT "Erro ao escrever no arquivo.\n"
+				EXIT 1
+
+
+	 Escrever_ok1:LD4 R2 Hemoglobina
+	 ST4 R2 Hemoglobina
+	 LD4 R1 Hemacias
+	 ST4 R1 Hemacias
+		PUSH R2 ;Calculo HEMOGLOBINA CORPUSCULAR MÉDIO
+			CALL Mulfixo
+			PUSH R1
+			CALL Divfixo
+			POP R2
+		PRINT "\tHEMOGLOBINA CORPUSCULAR MÉDIO = " R2 "\n"
+
+				;Imprimindo o dado no arquivo resultado.txt
+				LD4 R1 Handler_resultado
+				MV R4 0
+
+				PUSH Hcm              		; Parâmetro do tipo string
+				PUSH 0                      ; 
+				PUSH R1                     ; Handler do arquivo
+				SYSCALL 2 R4                ; FPRINT
+
+				PUSH R2                     ; Parâmetro do tipo inteiro
+				PUSH 1	                    
+				PUSH R1                     ; Handler_resultado
+				SYSCALL 2 R4                ; FPRINT
+
+				PUSH Space                  ; Parâmetro do tipo string
+				PUSH 0                      
+				PUSH R1                     ; Handler do arquivo
+				SYSCALL 2 R4                ; FPRINT
+
+				JZ R4 Escrever_ok2
+				PRINT "Erro ao escrever no arquivo.\n"
+				EXIT 1
+
+	 Escrever_ok2:LD4 R2 Hemoglobina
+	 ST4 R2 Hemoglobina
+	 LD4 R3 Hematocrito
+	 ST4 R3 Hematocrito
+		PUSH R2 ;Calculo CONCENTRAÇÃO DE HEMOGLOBINA CORPUSCULAR MÉDIO
+			CALL Mulfixo
+			PUSH R3
+			CALL Divfixo
+			POP R2
+		PRINT "\tCONCENTRAÇÃO DE HEMOGLOBINA CORPUSCULAR MÉDIO = " R2 "\n\n"
+
+				;Imprimindo o dado no arquivo resultado.txt
+				LD4 R3 Handler_dados
+				LD4 R1 Handler_resultado
+				MV R4 0
+				LD4 R8 Dados
+
+
+				PUSH Chcm              		; Parâmetro do tipo string
+				PUSH 0                      ; 
+				PUSH R1                     ; Handler do arquivo
+				SYSCALL 2 R4                ; FPRINT
+
+				PUSH R2                     ; Parâmetro do tipo inteiro
+				PUSH 1	                    
+				PUSH R1                     ; Handler_resultado
+				SYSCALL 2 R4                ; FPRINT
+
+				PUSH Space                  ; Parâmetro do tipo string
+				PUSH 0                      
+				PUSH R1                     ; Handler do arquivo
+				SYSCALL 2 R4                ; FPRINT
+
+					;Pula linha
+					PUSH Space1                  ; Parâmetro do tipo string
+					PUSH 0                      
+					PUSH R1                     ; Handler do arquivo
+					SYSCALL 2 R4                ; FPRINT
+
+					;Pula Linha
+		   		PUSH Space1                  ; Parâmetro do tipo string
+				PUSH 0                      
+				PUSH R1                     ; Handler do arquivo
+				SYSCALL 2 R4                ; FPRINT
+
+				JZ R4 Escrever_ok
+				PRINT "Erro ao escrever no arquivo.\n"
+				EXIT 1
+
+	
+	Escrever_ok:DEC R8 ; Quantos dados ele precisa ler
+	ST4 R8 Dados
+	JNZ R8 loop
+	PRINT "Foi criado um arquivo resultado.txt na pasta do programa com os resultados de cada paciente!"
+	;Fechando os arquivos
+    PUSH R1           ; Handler do arquivo.
+	SYSCALL 1 R4                ; FCLOSE
+	PUSH R3                     ; Handler do arquivo.
+	SYSCALL 1 R4                ; FCLOSE
+
+
+EXIT 0
+
+Fim_alternativo:PRINT "Não existe dados para ser calculado."
+				PUSH R1           ; Handler do arquivo.
+				SYSCALL 1 R4                ; FCLOSE
+				PUSH R3                     ; Handler do arquivo.
+				SYSCALL 1 R4                ; FCLOSE
+EXIT 0
+
+
+Mulfixo:POP R6 ; Multiplicação de ponto fixo
+		MV R5 100
+		MV R7 0
+		Soma:ADD R7 R6 R7
+		DEC R5
+		JNZ R5 Soma
+		PUSH R7
+	RET
+
+Divfixo:POP R2 ; Divisão de ponto fixo
+		POP R1
+		MV R5  0 
+		Teste:MV R3  0 ; Testa se R1 = R3?
+		SUB R1 R3 R3
+		JZ R3 Sim2
+		MV R7 0x80000000  ; Testa se R3 > R1
+		AND R3 R7 R3
+		JNZ R3 Sim1
+		SUB R1 R2 R1 
+		INC R5
+		JMP Teste
+		Sim1:DEC R5
+		Sim2:PUSH R5
+	RET
+
+
+
+
+
+
